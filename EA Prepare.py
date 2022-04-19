@@ -107,7 +107,9 @@ def parse_directory(current_directory):
                 else:
                     if not os.path.isfile(str(current_directory) + str('\\') + str(element) + str(backup_file_ending)):
                         file = open(str(current_directory) + str('\\') + str(element), 'r')
-                        if "using" in file.read() or "namespace" in file.read():
+                        buffer_file_read = file.read()[3:]
+                        if "using" in buffer_file_read or "namespace" in buffer_file_read:
+                            print("file opened")
                             file.close()
                             print(os.path.normpath(str(current_directory) + str('\\') + str(element)) + str(": "))
                             parse_file(str(current_directory) + str('\\') + str(element))
