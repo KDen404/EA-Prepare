@@ -6,13 +6,19 @@
 ################################################################
 
 import os.path
+from GITIGNORE_HANDLER import GITIGNORE_HANDLER
 
 fix = True
 start_path = ""
 search_for = ["using", "namespace"]
 not_search_for = ["//using", "//namespace"]
+ignored_directories = []
 searched_file_ending = ".cs"
 backup_file_ending = ".bak"
+
+
+#TODO: implement gitignore handler
+#TODO: implement start arg mode
 
 def get_mode_from_user():
     global fix
@@ -29,6 +35,12 @@ def get_mode_from_user():
         print()
         print('Bitte "fix" oder "prepare" eingeben!')
         get_mode_from_user()
+
+def if_any_in(list, SearchIn):
+    for element in list:
+        if str(element) in str(SearchIn):
+            return True
+    return False
 
 def get_path_from_user():
     print("Pfad eingeben auf welchen das script angewendet werden soll!")
@@ -99,26 +111,28 @@ def parse_file(file_path):
 def parse_directory(current_directory):
     this_directory = os.listdir(current_directory)
     for element in this_directory:
-        if os.path.isfile(str(current_directory) + str('\\') + str(element)):
-            if element.endswith(searched_file_ending):
-                if fix:
-                    if os.path.isfile(str(current_directory) + str('\\') + str(element) + str(backup_file_ending)):
-                        restore_file(str(current_directory) + str('\\') + str(element))
-                else:
-                    if not os.path.isfile(str(current_directory) + str('\\') + str(element) + str(backup_file_ending)):
-                        file = open(str(current_directory) + str('\\') + str(element), 'r')
-                        buffer_file_read = file.read()[3:]
-                        if "using" in buffer_file_read or "namespace" in buffer_file_read:
-                            print("file opened")
-                            file.close()
-                            print(os.path.normpath(str(current_directory) + str('\\') + str(element)) + str(": "))
-                            parse_file(str(current_directory) + str('\\') + str(element))
-                    else:
-                        print(str("File ist bereits vorbereitet: ") + os.path.normpath(str(current_directory) + str("\\") + str(element)))
-
-
-        elif os.path.isdir(str(current_directory) + str('\\') + str(element)):
+        if os.path.isdir(str(current_directory) + str('\\') + str(element)):
             parse_directory(str(current_directory) + str('\\') + str(element))
+            continue
+        if not element.endswith(searched_file_ending):
+            continue
+        if fix:
+            if os.path.isfile(str(current_directory) + str('\\') + str(element) + str(backup_file_ending)):
+                restore_file(str(current_directory) + str('\\') + str(element))
+        else:
+            if not os.path.isfile(str(current_directory) + str('\\') + str(element) + str(backup_file_ending)):
+                file = open(str(current_directory) + str('\\') + str(element), 'r')
+                if file.read()[3:].startswith("namespace") or file.read()[3:].startswith("using"):
+                    buffer_file_read = file.read()[3:]
+                else:
+                    buffer_file_read = file.read()
+                if if_any_in(search_for, buffer_file_read):
+                    print("file opened")
+                    file.close()
+                    print(os.path.normpath(str(current_directory) + str('\\') + str(element)) + str(": "))
+                    parse_file(str(current_directory) + str('\\') + str(element))
+                else:
+                    print(str("File ist bereits vorbereitet: ") + os.path.normpath(str(current_directory) + str("\\") + str(element)))
     return
 
 def main(path):
